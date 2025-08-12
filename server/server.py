@@ -20,7 +20,7 @@ from mcp.server.models import InitializationOptions
 
 # Use absolute imports
 from client.mikrotik import MikroTikClient
-from types.models import MikroTikConfig, is_valid_get_logs_args
+from mikrotik_types.models import MikroTikConfig, is_valid_get_logs_args
 
 # Load environment variables from .env file (non-fatal; actual config is read at runtime)
 load_dotenv()

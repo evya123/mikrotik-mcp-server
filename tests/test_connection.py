@@ -24,7 +24,7 @@ pytestmark = pytest.mark.skipif(
 async def test_connection_logic():
     """Test MikroTik client connection logic and error handling."""
     from client.mikrotik import MikroTikClient
-    from types.models import MikroTikConfig
+from mikrotik_types.models import MikroTikConfig
     
     # Test with mock configuration
     config = {

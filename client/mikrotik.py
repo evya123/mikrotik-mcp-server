@@ -31,7 +31,7 @@ from typing import Dict, List, Optional, Any, Union, cast
 from requests.auth import HTTPBasicAuth
 
 # Use absolute imports
-from python_src.types.models import (
+from mikrotik_types.models import (
     MikroTikConfig, 
     MikroTikLogEntry, 
     MikroTikAPIResponse,
