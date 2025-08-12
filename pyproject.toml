@@ -27,7 +27,7 @@ mikrotik-mcp = "server.server:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["server*", "client*", "types*"]
+include = ["server*", "client*", "mikrotik_types*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.py"]
