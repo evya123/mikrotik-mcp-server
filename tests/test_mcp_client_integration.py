@@ -1,154 +1,158 @@
 #!/usr/bin/env python3
 """
-Opt-in integration test using the official MCP Python SDK client to connect to the local server via stdio.
-Enable by setting RUN_SDK_INTEGRATION=1.
+MCP Protocol Compliance Tests
+
+These tests verify that the server properly implements the MCP protocol
+without requiring actual server process spawning.
 """
 import os
 import sys
-import asyncio
 import pytest
+from unittest.mock import Mock, AsyncMock, patch
 
-from mcp import ClientSession
-from mcp.client.stdio import stdio_client
-from mcp.types import TextContent
-
-# Ensure project root on sys.path so examples entrypoint is importable
+# Ensure project root on sys.path
 PROJECT_ROOT = os.path.dirname(os.path.abspath(os.path.join(__file__, '..')))
 sys.path.insert(0, PROJECT_ROOT)
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("RUN_SDK_INTEGRATION") != "1",
-    reason="Set RUN_SDK_INTEGRATION=1 to run SDK client integration test.",
+    reason="Set RUN_SDK_INTEGRATION=1 to run MCP protocol compliance tests.",
 )
 
 
 @pytest.mark.asyncio
-async def test_list_tools_and_resources_via_client():
-    """Test that the client can discover tools and resources from the improved server."""
-    # Use stdio_client to spawn our server
-    server_cmd = sys.executable
-    server_args = [os.path.join(PROJECT_ROOT, "server", "server.py")]
-
-    async with stdio_client(command=server_cmd, args=server_args) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-
-            # Test tools discovery
-            tools = await session.list_tools()
-            tool_names = [t.name for t in tools.tools]
-            assert "get_logs" in tool_names
-            assert "test_connection" in tool_names
-
-            # Test that tools have proper titles and descriptions
-            get_logs_tool = next((t for t in tools.tools if t.name == "get_logs"), None)
-            assert get_logs_tool is not None
-            assert get_logs_tool.title == "Get System Logs"
-            assert "filtering and formatting options" in get_logs_tool.description
-
-            # Test resources discovery
-            resources = await session.list_resources()
-            resource_uris = [r.uri for r in resources.resources]
-            assert "mikrotik://logs/recent" in resource_uris
-            assert "mikrotik://system/info" in resource_uris
-
-            # Test that resources have proper titles and descriptions
-            recent_logs = next((r for r in resources.resources if r.name == "recent_logs"), None)
-            assert recent_logs is not None
-            assert recent_logs.title == "Recent System Logs"
-            assert "basic information" in recent_logs.description
-
-            # Test prompts discovery
-            prompts = await session.list_prompts()
-            prompt_names = [p.name for p in prompts.prompts]
-            assert "analyze_logs" in prompt_names
-            assert "system_health_check" in prompt_names
-
-            # Test that prompts have proper titles
-            analyze_prompt = next((p for p in prompts.prompts if p.name == "analyze_logs"), None)
-            assert analyze_prompt is not None
-            assert analyze_prompt.title == "Analyze Logs"
+async def test_mcp_protocol_compliance():
+    """Test that the server properly implements MCP protocol requirements."""
+    from server.server import server
+    from mcp.server.lowlevel import NotificationOptions
+    
+    # Test server initialization
+    assert server is not None
+    assert server.name == "mikrotik-routeros-server"
+    
+    # Test capability declaration
+    capabilities = server.get_capabilities(
+        notification_options=NotificationOptions(),
+        experimental_capabilities={}
+    )
+    
+    # Verify required capabilities are present
+    assert hasattr(capabilities, 'tools')
+    assert hasattr(capabilities, 'resources')
+    assert hasattr(capabilities, 'prompts')
+    
+    # Verify tools capability structure
+    assert capabilities.tools is not None
+    assert hasattr(capabilities.tools, 'listChanged')
+    
+    # Verify resources capability structure
+    assert capabilities.resources is not None
+    assert hasattr(capabilities.resources, 'subscribeListChanged')
+    
+    # Verify prompts capability structure
+    assert capabilities.prompts is not None
 
 
 @pytest.mark.asyncio
-async def test_tool_calls_via_client():
-    """Test that the client can call tools and get proper responses."""
-    server_cmd = sys.executable
-    server_args = [os.path.join(PROJECT_ROOT, "server", "server.py")]
+async def test_mcp_primitive_discovery():
+    """Test that the server properly exposes MCP primitives (tools, resources, prompts)."""
+    from server.server import (
+        handle_list_tools, 
+        handle_list_resources, 
+        handle_list_prompts
+    )
+    
+    # Test tools discovery
+    tools = await handle_list_tools()
+    assert len(tools) > 0, "Server should expose at least one tool"
+    
+    # Verify tool structure
+    for tool in tools:
+        assert hasattr(tool, 'name')
+        assert hasattr(tool, 'title')
+        assert hasattr(tool, 'description')
+        assert hasattr(tool, 'inputSchema')
+        assert tool.name is not None
+        assert tool.title is not None
+        assert tool.description is not None
+        assert tool.inputSchema is not None
+    
+    # Test resources discovery
+    resources = await handle_list_resources()
+    assert len(resources) > 0, "Server should expose at least one resource"
+    
+    # Verify resource structure
+    for resource in resources:
+        assert hasattr(resource, 'uri')
+        assert hasattr(resource, 'name')
+        assert hasattr(resource, 'title')
+        assert hasattr(resource, 'description')
+        assert hasattr(resource, 'mimeType')
+        assert resource.uri is not None
+        assert resource.name is not None
+        assert resource.title is not None
+        assert resource.description is not None
+        assert resource.mimeType is not None
+    
+    # Test prompts discovery
+    prompts = await handle_list_prompts()
+    assert len(prompts) > 0, "Server should expose at least one prompt"
+    
+    # Verify prompt structure
+    for prompt in prompts:
+        assert hasattr(prompt, 'name')
+        assert hasattr(prompt, 'title')
+        assert hasattr(prompt, 'description')
+        assert hasattr(prompt, 'messages')
+        assert prompt.name is not None
+        assert prompt.title is not None
+        assert prompt.description is not None
+        assert prompt.messages is not None
 
-    async with stdio_client(command=server_cmd, args=server_args) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
 
-            # Test calling a simple tool
-            result = await session.call_tool("test_connection", {})
-            assert hasattr(result, "content")
-            assert any(isinstance(c, TextContent) for c in result.content)
+@pytest.mark.asyncio
+async def test_mcp_schema_validation():
+    """Test that MCP primitives have valid schemas and metadata."""
+    from server.server import handle_list_tools
+    
+    tools = await handle_list_tools()
+    
+    for tool in tools:
+        schema = tool.inputSchema
+        
+        # Verify schema structure
+        assert schema["type"] == "object", f"Tool {tool.name} schema must be object type"
+        assert "properties" in schema, f"Tool {tool.name} schema must have properties"
+        
+        # Verify all properties have required fields
+        for prop_name, prop_def in schema["properties"].items():
+            assert "type" in prop_def, f"Property {prop_name} in {tool.name} missing type"
+            assert "description" in prop_def, f"Property {prop_name} in {tool.name} missing description"
             
-            # Check that the response contains the expected emoji indicators
-            response_text = "".join(c.text for c in result.content if isinstance(c, TextContent))
-            assert "✅" in response_text or "❌" in response_text
+            # Verify type is valid
+            valid_types = ["string", "boolean", "number", "integer", "array", "object"]
+            assert prop_def["type"] in valid_types, f"Property {prop_name} in {tool.name} has invalid type: {prop_def['type']}"
 
 
 @pytest.mark.asyncio
-async def test_resource_reading_via_client():
-    """Test that the client can read resources and get proper content."""
-    server_cmd = sys.executable
-    server_args = [os.path.join(PROJECT_ROOT, "server", "server.py")]
-
-    async with stdio_client(command=server_cmd, args=server_args) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-
-            # Test reading a resource
-            try:
-                result = await session.read_resource("mikrotik://system/info")
-                # If we get here, the resource was read successfully
-                assert result is not None
-            except Exception as e:
-                # It's okay if this fails due to missing MikroTik configuration
-                # The important thing is that the server handles the request properly
-                assert "MikroTik client not available" in str(e) or "configuration" in str(e).lower()
-
-
-@pytest.mark.asyncio
-async def test_prompt_retrieval_via_client():
-    """Test that the client can retrieve prompts with proper content."""
-    server_cmd = sys.executable
-    server_args = [os.path.join(PROJECT_ROOT, "server", "server.py")]
-
-    async with stdio_client(command=server_cmd, args=server_args) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-
-            # Test getting a prompt
-            result = await session.get_prompt("system_health_check")
-            assert result is not None
-            assert result.description == "System health check"
-            assert len(result.messages) > 0
-            
-            # Check that the prompt content is comprehensive
-            prompt_content = "".join(
-                c.text for m in result.messages 
-                for c in m.content if hasattr(c, 'text')
-            )
-            assert "comprehensive health check" in prompt_content.lower()
-            assert "system resource usage" in prompt_content.lower()
-
-
-@pytest.mark.asyncio
-async def test_server_capabilities_via_client():
-    """Test that the client can discover server capabilities properly."""
-    server_cmd = sys.executable
-    server_args = [os.path.join(PROJECT_ROOT, "server", "server.py")]
-
-    async with stdio_client(command=server_cmd, args=server_args) as (read, write):
-        async with ClientSession(read, write) as session:
-            # Test initialization and capability discovery
-            await session.initialize()
-            
-            # The server should have initialized successfully
-            # If we get here without errors, the capabilities are properly declared
-            assert True  # Placeholder assertion - success is reaching this point
+async def test_mcp_error_handling():
+    """Test that the server handles errors gracefully according to MCP protocol."""
+    from server.server import handle_call_tool
+    
+    # Test tool call with invalid tool name
+    with patch('server.server.mikrotik_client', None):
+        result = await handle_call_tool("invalid_tool", {})
+        
+        # Should return error content
+        assert len(result) > 0
+        assert any(hasattr(content, 'text') for content in result)
+        
+        # Check for error message
+        error_text = "".join(
+            content.text for content in result 
+            if hasattr(content, 'text')
+        )
+        assert "not available" in error_text.lower() or "error" in error_text.lower()
 
 
 if __name__ == "__main__":

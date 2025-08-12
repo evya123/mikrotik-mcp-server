@@ -149,5 +149,177 @@ async def test_resource_metadata():
         assert len(resource.description) > 20, f"Resource {resource.uri} description too short"
 
 
+# Enhanced tests from improvements
+@pytest.mark.asyncio
+async def test_improved_tool_descriptions():
+    """Test that tools have improved, more descriptive descriptions."""
+    from server.server import handle_list_tools
+    tools = await handle_list_tools()
+    
+    get_logs_tool = next((t for t in tools if t.name == "get_logs"), None)
+    assert get_logs_tool is not None
+    assert "filtering and formatting options" in get_logs_tool.description
+    
+    test_connection_tool = next((t for t in tools if t.name == "test_connection"), None)
+    assert test_connection_tool is not None
+    assert "verify authentication" in test_connection_tool.description
+
+
+@pytest.mark.asyncio
+async def test_improved_resource_descriptions():
+    """Test that resources have improved, more descriptive descriptions."""
+    from server.server import handle_list_resources
+    resources = await handle_list_resources()
+    
+    recent_logs = next((r for r in resources if r.name == "recent_logs"), None)
+    assert recent_logs is not None
+    assert "basic information" in recent_logs.description
+    
+    system_info = next((r for r in resources if r.name == "system_info"), None)
+    assert system_info is not None
+    assert "resource usage" in system_info.description
+
+
+@pytest.mark.asyncio
+async def test_prompt_metadata_improvements():
+    """Test that prompts have improved metadata and descriptions."""
+    from server.server import handle_list_prompts
+    prompts = await handle_list_prompts()
+    
+    analyze_logs = next((p for p in prompts if p.name == "analyze_logs"), None)
+    assert analyze_logs is not None
+    assert analyze_logs.title == "Analyze Logs"
+    assert "comprehensive" in analyze_logs.description
+    
+    system_health = next((p for p in prompts if p.name == "system_health_check"), None)
+    assert system_health is not None
+    assert system_health.title == "System Health Check"
+    assert "performance" in system_health.description
+
+
+@pytest.mark.asyncio
+async def test_server_capabilities():
+    """Test that the server declares proper capabilities."""
+    from mcp.server.lowlevel import NotificationOptions
+    
+    capabilities = server.get_capabilities(
+        notification_options=NotificationOptions(),
+        experimental_capabilities={}
+    )
+    
+    # Check that basic capabilities are present
+    assert hasattr(capabilities, 'tools')
+    assert hasattr(capabilities, 'resources')
+    assert hasattr(capabilities, 'prompts')
+    
+    # Check that tools capability has proper feature flags
+    if hasattr(capabilities.tools, 'listChanged'):
+        assert capabilities.tools.listChanged is not None
+    
+    # Check that resources capability has proper feature flags
+    if hasattr(capabilities.resources, 'subscribeListChanged'):
+        assert capabilities.resources.subscribeListChanged is not None
+
+
+@pytest.mark.asyncio
+async def test_lifespan_context_management():
+    """Test that the server lifespan properly manages context."""
+    from server.server import server_lifespan
+    
+    # Test lifespan context creation
+    async with server_lifespan(server) as context:
+        assert "mikrotik_client" in context
+        # Client might be None if no config, which is expected behavior
+
+
+@pytest.mark.asyncio
+async def test_tool_schema_validation():
+    """Test that tool schemas are properly structured and validated."""
+    from server.server import handle_list_tools
+    tools = await handle_list_tools()
+    
+    for tool in tools:
+        schema = tool.inputSchema
+        assert schema["type"] == "object"
+        assert "properties" in schema
+        
+        # Check that all properties have descriptions
+        for prop_name, prop_def in schema["properties"].items():
+            assert "description" in prop_def, f"Property {prop_name} missing description"
+            assert "type" in prop_def, f"Property {prop_name} missing type"
+
+
+@pytest.mark.asyncio
+async def test_resource_uri_consistency():
+    """Test that resource URIs follow consistent patterns."""
+    from server.server import handle_list_resources
+    resources = await handle_list_resources()
+    
+    for resource in resources:
+        # All URIs should start with mikrotik://
+        uri_str = str(resource.uri)
+        assert uri_str.startswith("mikrotik://"), f"Invalid URI format: {uri_str}"
+        
+        # URIs should have proper structure
+        parts = uri_str.replace("mikrotik://", "").split("/")
+        assert len(parts) >= 2, f"URI should have at least category and type: {uri_str}"
+        
+        # Check that category is valid
+        valid_categories = ["logs", "system"]
+        assert parts[0] in valid_categories, f"Invalid category in URI: {uri_str}"
+
+
+# Additional coverage tests
+@pytest.mark.asyncio
+async def test_server_configuration_validation():
+    """Test that server configuration is properly validated."""
+    # Test server name format
+    assert server.name == "mikrotik-routeros-server"
+    assert len(server.name) > 0
+    assert "mikrotik" in server.name.lower()
+    
+    # Test server has required attributes
+    assert hasattr(server, 'name')
+    assert hasattr(server, 'get_capabilities')
+
+
+@pytest.mark.asyncio
+async def test_mcp_primitive_counts():
+    """Test that the server exposes the expected number of MCP primitives."""
+    from server.server import handle_list_tools, handle_list_resources, handle_list_prompts
+    
+    tools = await handle_list_tools()
+    resources = await handle_list_resources()
+    prompts = await handle_list_prompts()
+    
+    # Verify we have the expected number of primitives
+    assert len(tools) >= 8, f"Expected at least 8 tools, got {len(tools)}"
+    assert len(resources) >= 7, f"Expected at least 7 resources, got {len(resources)}"
+    assert len(prompts) >= 3, f"Expected at least 3 prompts, got {len(prompts)}"
+
+
+@pytest.mark.asyncio
+async def test_error_response_format():
+    """Test that error responses follow proper MCP format."""
+    from server.server import handle_call_tool
+    
+    # Test with invalid tool name
+    result = await handle_call_tool("nonexistent_tool", {})
+    
+    # Should return list of content items
+    assert isinstance(result, list)
+    assert len(result) > 0
+    
+    # Should contain text content
+    assert any(hasattr(content, 'text') for content in result)
+    
+    # Check error message content
+    error_text = "".join(
+        content.text for content in result 
+        if hasattr(content, 'text')
+    )
+    assert len(error_text) > 0, "Error response should contain text"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
