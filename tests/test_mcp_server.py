@@ -9,7 +9,7 @@ import os
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
-from python_src.server.server import server
+from server.server import server
 
 
 def test_server_initialization():
@@ -22,7 +22,7 @@ def test_server_initialization():
 async def test_server_has_resources():
     """Test that the server has the expected resources with proper metadata."""
     # Get the server's resources using the handler
-    from python_src.server.server import handle_list_resources
+    from server.server import handle_list_resources
     resources = await handle_list_resources()
     
     expected_resources = [
@@ -53,7 +53,7 @@ async def test_server_has_resources():
 async def test_server_has_tools():
     """Test that the server has the expected tools with proper metadata."""
     # Get the server's tools using the handler
-    from python_src.server.server import handle_list_tools
+    from server.server import handle_list_tools
     tools = await handle_list_tools()
     
     expected_tools = [
@@ -84,7 +84,7 @@ async def test_server_has_tools():
 async def test_server_has_prompts():
     """Test that the server has the expected prompts with proper metadata."""
     # Get the server's prompts using the handler
-    from python_src.server.server import handle_list_prompts
+    from server.server import handle_list_prompts
     prompts = await handle_list_prompts()
     
     expected_prompts = [
@@ -108,7 +108,7 @@ async def test_server_has_prompts():
 @pytest.mark.asyncio
 async def test_tool_schemas():
     """Test that tools have proper JSON schemas."""
-    from python_src.server.server import handle_list_tools
+    from server.server import handle_list_tools
     tools = await handle_list_tools()
     
     # Test get_logs tool has comprehensive schema
@@ -134,7 +134,7 @@ async def test_tool_schemas():
 @pytest.mark.asyncio
 async def test_resource_metadata():
     """Test that resources have consistent and useful metadata."""
-    from python_src.server.server import handle_list_resources
+    from server.server import handle_list_resources
     resources = await handle_list_resources()
     
     # Test that all resources have consistent naming patterns

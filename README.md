@@ -69,13 +69,13 @@ python -m python_src.server.server
 #### Using MCP CLI Tools
 ```bash
 # Test with MCP Inspector
-mcp dev python_src/server/server.py
+mcp dev server/server.py
 
 # Install in Claude Desktop
-mcp install python_src/server/server.py
+mcp install server/server.py
 
 # Run directly
-mcp run python_src/server/server.py
+mcp run server/server.py
 ```
 
 ### Available MCP Resources
@@ -116,7 +116,7 @@ Enhanced prompts with comprehensive guidance:
 ### Basic Usage
 
 ```python
-from python_src.client.mikrotik import MikroTikClient
+from client.mikrotik import MikroTikClient
 
 # Configuration
 config = {
@@ -174,7 +174,7 @@ Add to your Claude Desktop configuration:
   "mcpServers": {
     "mikrotik": {
       "command": "python3",
-      "args": ["/path/to/mikrotik-mcp/python_src/server/server.py"],
+      "args": ["/path/to/mikrotik-mcp/server/server.py"],
       "env": {
         "MIKROTIK_HOST": "192.168.88.1",
         "MIKROTIK_USERNAME": "admin",
@@ -193,33 +193,32 @@ Add to your Claude Desktop configuration:
 
 ```
 mikrotik-mcp/
-├── python_src/
-│   ├── client/          # MikroTik API client
-│   ├── server/          # MCP server implementation
-│   └── types/           # Type definitions
-├── python_tests/        # Comprehensive test suite
-├── config/              # Configuration files
-├── pyproject.toml       # Project configuration
-├── requirements.txt     # Python dependencies
-└── README.md           # This file
+├── server/                 # MCP server implementation
+├── client/                 # MikroTik API client
+├── types/                  # Type definitions
+├── tests/                  # Comprehensive test suite
+├── config/                 # Configuration files
+├── pyproject.toml         # Project configuration
+├── requirements.txt        # Python dependencies
+└── README.md              # This file
 ```
 
 ### Running Tests
 
 ```bash
 # Run all tests
-pytest python_tests/
+pytest tests/
 
 # Run specific test categories
-pytest python_tests/test_mcp_server.py          # Core server tests
-pytest python_tests/test_mcp_improvements.py    # SDK alignment tests
-pytest python_tests/test_mcp_client_integration.py  # Client integration tests
+pytest tests/test_mcp_server.py          # Core server tests
+pytest tests/test_mcp_improvements.py    # SDK alignment tests
+pytest tests/test_mcp_client_integration.py  # Client integration tests
 
 # Run integration tests (requires real MikroTik device)
-RUN_INTEGRATION_TESTS=1 pytest python_tests/test_connection.py
+RUN_INTEGRATION_TESTS=1 pytest tests/test_connection.py
 
 # Run SDK client integration tests
-RUN_SDK_INTEGRATION=1 pytest python_tests/test_mcp_client_integration.py
+RUN_SDK_INTEGRATION=1 pytest tests/test_mcp_client_integration.py
 ```
 
 ### Code Quality

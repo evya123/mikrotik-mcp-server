@@ -11,10 +11,10 @@ import asyncio
 import pytest
 from dotenv import load_dotenv
 
-# Add parent directory to path to import from python_src
+# Add parent directory to path to import from client
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from python_src.client.mikrotik import MikroTikClient
-from python_src.types.models import MikroTikConfig
+from client.mikrotik import MikroTikClient
+from types.models import MikroTikConfig
 
 
 # Skip this integration test unless explicitly enabled

@@ -1,33 +1,37 @@
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "mikrotik-mcp"
 version = "0.1.0"
 description = "MCP server for MikroTik RouterOS API"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
-authors = [
-    {name = "Evyatar Shtern"}
-]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "requests>=2.31.0",
     "python-dotenv>=1.0.0",
-    "mcp[cli]>=1.0.0",
+    "mcp[cli]>=1.12.0",
 ]
 
 [project.scripts]
-mikrotik-mcp = "python_src.server.server:main"
+mikrotik-mcp = "server.server:main"
 
-[tool.setuptools]
-packages = ["python_src"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["server*", "client*", "types*"]
 
-[tool.pytest]
-testpaths = ["python_tests"]
+[tool.setuptools.package-data]
+"*" = ["*.py"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

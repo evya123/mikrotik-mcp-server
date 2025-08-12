@@ -27,7 +27,7 @@ async def test_list_tools_and_resources_via_client():
     """Test that the client can discover tools and resources from the improved server."""
     # Use stdio_client to spawn our server
     server_cmd = sys.executable
-    server_args = [os.path.join(PROJECT_ROOT, "examples", "run_mcp_server.py")]
+    server_args = [os.path.join(PROJECT_ROOT, "server", "server.py")]
 
     async with stdio_client(command=server_cmd, args=server_args) as (read, write):
         async with ClientSession(read, write) as session:
@@ -73,7 +73,7 @@ async def test_list_tools_and_resources_via_client():
 async def test_tool_calls_via_client():
     """Test that the client can call tools and get proper responses."""
     server_cmd = sys.executable
-    server_args = [os.path.join(PROJECT_ROOT, "examples", "run_mcp_server.py")]
+    server_args = [os.path.join(PROJECT_ROOT, "server", "server.py")]
 
     async with stdio_client(command=server_cmd, args=server_args) as (read, write):
         async with ClientSession(read, write) as session:
@@ -93,7 +93,7 @@ async def test_tool_calls_via_client():
 async def test_resource_reading_via_client():
     """Test that the client can read resources and get proper content."""
     server_cmd = sys.executable
-    server_args = [os.path.join(PROJECT_ROOT, "examples", "run_mcp_server.py")]
+    server_args = [os.path.join(PROJECT_ROOT, "server", "server.py")]
 
     async with stdio_client(command=server_cmd, args=server_args) as (read, write):
         async with ClientSession(read, write) as session:
@@ -114,7 +114,7 @@ async def test_resource_reading_via_client():
 async def test_prompt_retrieval_via_client():
     """Test that the client can retrieve prompts with proper content."""
     server_cmd = sys.executable
-    server_args = [os.path.join(PROJECT_ROOT, "examples", "run_mcp_server.py")]
+    server_args = [os.path.join(PROJECT_ROOT, "server", "server.py")]
 
     async with stdio_client(command=server_cmd, args=server_args) as (read, write):
         async with ClientSession(read, write) as session:
@@ -139,7 +139,7 @@ async def test_prompt_retrieval_via_client():
 async def test_server_capabilities_via_client():
     """Test that the client can discover server capabilities properly."""
     server_cmd = sys.executable
-    server_args = [os.path.join(PROJECT_ROOT, "examples", "run_mcp_server.py")]
+    server_args = [os.path.join(PROJECT_ROOT, "server", "server.py")]
 
     async with stdio_client(command=server_cmd, args=server_args) as (read, write):
         async with ClientSession(read, write) as session:

@@ -11,7 +11,7 @@ from unittest.mock import Mock, AsyncMock, patch
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
-from python_src.server.server import (
+from server.server import (
     server, 
     handle_call_tool, 
     handle_read_resource,
@@ -22,10 +22,10 @@ from python_src.server.server import (
 @pytest.mark.asyncio
 async def test_improved_tool_descriptions():
     """Test that tools have improved, more descriptive descriptions."""
-    from python_src.server.server import handle_list_tools
+    # Check that descriptions are more informative
+    from server.server import handle_list_tools
     tools = await handle_list_tools()
     
-    # Check that descriptions are more informative
     get_logs_tool = next((t for t in tools if t.name == "get_logs"), None)
     assert get_logs_tool is not None
     assert "filtering and formatting options" in get_logs_tool.description
@@ -38,7 +38,7 @@ async def test_improved_tool_descriptions():
 @pytest.mark.asyncio
 async def test_improved_resource_descriptions():
     """Test that resources have improved, more descriptive descriptions."""
-    from python_src.server.server import handle_list_resources
+    from server.server import handle_list_resources
     resources = await handle_list_resources()
     
     # Check that descriptions are more informative
@@ -54,7 +54,7 @@ async def test_improved_resource_descriptions():
 @pytest.mark.asyncio
 async def test_prompt_metadata_improvements():
     """Test that prompts have improved metadata and descriptions."""
-    from python_src.server.server import handle_list_prompts
+    from server.server import handle_list_prompts
     prompts = await handle_list_prompts()
     
     # Check that prompts have titles
@@ -105,7 +105,7 @@ async def test_lifespan_context_management():
 @pytest.mark.asyncio
 async def test_tool_schema_validation():
     """Test that tool schemas are properly structured and validated."""
-    from python_src.server.server import handle_list_tools
+    from server.server import handle_list_tools
     tools = await handle_list_tools()
     
     for tool in tools:
@@ -122,7 +122,7 @@ async def test_tool_schema_validation():
 @pytest.mark.asyncio
 async def test_resource_uri_consistency():
     """Test that resource URIs follow consistent patterns."""
-    from python_src.server.server import handle_list_resources
+    from server.server import handle_list_resources
     resources = await handle_list_resources()
     
     for resource in resources:
@@ -142,7 +142,7 @@ async def test_resource_uri_consistency():
 @pytest.mark.asyncio
 async def test_tool_schemas():
     """Test that tools have proper JSON schemas."""
-    from python_src.server.server import handle_list_tools
+    from server.server import handle_list_tools
     tools = await handle_list_tools()
     
     # Test get_logs tool has comprehensive schema
@@ -168,7 +168,7 @@ async def test_tool_schemas():
 @pytest.mark.asyncio
 async def test_resource_metadata():
     """Test that resources have consistent and useful metadata."""
-    from python_src.server.server import handle_list_resources
+    from server.server import handle_list_resources
     resources = await handle_list_resources()
     
     # Test that all resources have consistent naming patterns

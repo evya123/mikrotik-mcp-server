@@ -19,8 +19,8 @@ from mcp.server.lowlevel import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
 # Use absolute imports
-from python_src.client.mikrotik import MikroTikClient
-from python_src.types.models import MikroTikConfig, is_valid_get_logs_args
+from client.mikrotik import MikroTikClient
+from types.models import MikroTikConfig, is_valid_get_logs_args
 
 # Load environment variables from .env file (non-fatal; actual config is read at runtime)
 load_dotenv()
