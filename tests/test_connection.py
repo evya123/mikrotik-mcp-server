@@ -23,8 +23,8 @@ pytestmark = pytest.mark.skipif(
 @pytest.mark.asyncio
 async def test_connection_logic():
     """Test MikroTik client connection logic and error handling."""
-    from client.mikrotik import MikroTikClient
-from mikrotik_types.models import MikroTikConfig
+    from src.mcp_mikrotik import MikroTikClient
+    from src.mcp_mikrotik.models import MikroTikConfig
     
     # Test with mock configuration
     config = {
@@ -38,16 +38,16 @@ from mikrotik_types.models import MikroTikConfig
     # Test client initialization
     client = MikroTikClient(config)
     assert client is not None
-    assert client.host == "192.168.88.1"
-    assert client.username == "admin"
-    assert client.port == 443
-    assert client.use_ssl is True
+    assert client.config["host"] == "192.168.88.1"
+    assert client.config["username"] == "admin"
+    assert client.config["port"] == 443
+    assert client.config["useSSL"] is True
 
 
 @pytest.mark.asyncio
 async def test_connection_error_handling():
     """Test that connection errors are handled gracefully."""
-    from client.mikrotik import MikroTikClient
+    from src.mcp_mikrotik import MikroTikClient
     
     # Test with invalid configuration
     invalid_config = {
