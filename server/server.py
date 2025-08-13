@@ -18,9 +18,10 @@ import mcp.types as types
 from mcp.server.lowlevel import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-# Use absolute imports
-from client.mikrotik import MikroTikClient
-from mikrotik_types.models import MikroTikConfig, is_valid_get_logs_args
+# Use absolute imports from the new organized structure
+from src.mcp_mikrotik import MikroTikClient
+from src.mcp_mikrotik.models import MikroTikConfig
+from src.mcp_mikrotik.logs.models import is_valid_get_logs_args
 
 # Load environment variables from .env file (non-fatal; actual config is read at runtime)
 load_dotenv()
@@ -150,6 +151,41 @@ async def handle_list_resources() -> List[types.Resource]:
             description="Get current system information and resource usage from MikroTik device",
             mimeType="application/json"
         ),
+        types.Resource(
+            uri="mikrotik://system/health",
+            name="system_health",
+            title="System Health",
+            description="Get comprehensive system health metrics and status from MikroTik device",
+            mimeType="application/json"
+        ),
+        types.Resource(
+            uri="mikrotik://ip/addresses",
+            name="ip_addresses",
+            title="IP Addresses",
+            description="Get IP address configurations from MikroTik device",
+            mimeType="application/json"
+        ),
+        types.Resource(
+            uri="mikrotik://ip/routes",
+            name="ip_routes",
+            title="IP Routes",
+            description="Get IP routing table from MikroTik device",
+            mimeType="application/json"
+        ),
+        types.Resource(
+            uri="mikrotik://ip/pools",
+            name="ip_pools",
+            title="IP Pools",
+            description="Get IP address pools from MikroTik device",
+            mimeType="application/json"
+        ),
+        types.Resource(
+            uri="mikrotik://ip/network_summary",
+            name="network_summary",
+            title="Network Summary",
+            description="Get comprehensive network configuration summary from MikroTik device",
+            mimeType="application/json"
+        ),
     ]
 
 
@@ -201,6 +237,26 @@ async def handle_read_resource(uri: str) -> tuple[bytes, str]:
         elif uri == "mikrotik://system/info":
             system_info = await mikrotik_client.get_system_info()
             return json.dumps(system_info, indent=2).encode('utf-8'), "application/json"
+        
+        elif uri == "mikrotik://system/health":
+            system_health = await mikrotik_client.get_system_health()
+            return json.dumps(system_health, indent=2).encode('utf-8'), "application/json"
+        
+        elif uri == "mikrotik://ip/addresses":
+            ip_addresses = await mikrotik_client.get_ip_addresses()
+            return json.dumps(ip_addresses, indent=2).encode('utf-8'), "application/json"
+        
+        elif uri == "mikrotik://ip/routes":
+            ip_routes = await mikrotik_client.get_ip_routes()
+            return json.dumps(ip_routes, indent=2).encode('utf-8'), "application/json"
+        
+        elif uri == "mikrotik://ip/pools":
+            ip_pools = await mikrotik_client.get_ip_pools()
+            return json.dumps(ip_pools, indent=2).encode('utf-8'), "application/json"
+        
+        elif uri == "mikrotik://ip/network_summary":
+            network_summary = await mikrotik_client.get_network_summary()
+            return json.dumps(network_summary, indent=2).encode('utf-8'), "application/json"
         
         else:
             raise ValueError(f"Unknown resource URI: {uri}")
@@ -333,6 +389,70 @@ async def handle_list_tools() -> List[types.Tool]:
             }
         ),
         types.Tool(
+            name="get_system_info",
+            title="Get System Information",
+            description="Retrieve system information and resource usage from MikroTik device",
+            inputSchema={
+                "type": "object",
+                "properties": {}
+            }
+        ),
+        types.Tool(
+            name="get_system_health",
+            title="Get System Health",
+            description="Retrieve comprehensive system health metrics and status from MikroTik device",
+            inputSchema={
+                "type": "object",
+                "properties": {}
+            }
+        ),
+        types.Tool(
+            name="get_ip_addresses",
+            title="Get IP Addresses",
+            description="Retrieve IP address configurations from MikroTik device",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "interface": {"type": "string", "description": "Filter by interface name"},
+                    "network": {"type": "string", "description": "Filter by network address"},
+                    "comment": {"type": "string", "description": "Filter by comment"},
+                    "disabled": {"type": "boolean", "description": "Filter by disabled status"}
+                }
+            }
+        ),
+        types.Tool(
+            name="get_ip_routes",
+            title="Get IP Routes",
+            description="Retrieve IP routing table from MikroTik device",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "dst_address": {"type": "string", "description": "Filter by destination address"},
+                    "gateway": {"type": "string", "description": "Filter by gateway address"},
+                    "routing_mark": {"type": "string", "description": "Filter by routing mark"},
+                    "disabled": {"type": "boolean", "description": "Filter by disabled status"}
+                }
+            }
+        ),
+        types.Tool(
+            name="get_ip_pools",
+            title="Get IP Pools",
+            description="Retrieve IP address pools from MikroTik device",
+            inputSchema={
+                "type": "object",
+                "properties": {}
+            }
+        ),
+        types.Tool(
+            name="get_network_summary",
+            title="Get Network Summary",
+            description="Retrieve comprehensive network configuration summary from MikroTik device",
+            inputSchema={
+                "type": "object",
+                "properties": {}
+            }
+        ),
+        types.Tool(
             name="test_connection",
             title="Test Connection",
             description="Test the connection to the MikroTik device and verify authentication",
@@ -408,6 +528,34 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[Union[t
             logs = await mikrotik_client.get_logs_with_extra_info(args)
             return [types.TextContent(type="text", text=json.dumps(logs, indent=2))]
         
+        elif name == "get_system_info":
+            system_info = await mikrotik_client.get_system_info()
+            return [types.TextContent(type="text", text=json.dumps(system_info, indent=2))]
+        
+        elif name == "get_system_health":
+            system_health = await mikrotik_client.get_system_health()
+            return [types.TextContent(type="text", text=json.dumps(system_health, indent=2))]
+        
+        elif name == "get_ip_addresses":
+            # Build options dict
+            options = {k: v for k, v in arguments.items() if v is not None}
+            ip_addresses = await mikrotik_client.get_ip_addresses(options)
+            return [types.TextContent(type="text", text=json.dumps(ip_addresses, indent=2))]
+        
+        elif name == "get_ip_routes":
+            # Build options dict
+            options = {k: v for k, v in arguments.items() if v is not None}
+            ip_routes = await mikrotik_client.get_ip_routes(options)
+            return [types.TextContent(type="text", text=json.dumps(ip_routes, indent=2))]
+        
+        elif name == "get_ip_pools":
+            ip_pools = await mikrotik_client.get_ip_pools()
+            return [types.TextContent(type="text", text=json.dumps(ip_pools, indent=2))]
+        
+        elif name == "get_network_summary":
+            network_summary = await mikrotik_client.get_network_summary()
+            return [types.TextContent(type="text", text=json.dumps(network_summary, indent=2))]
+        
         elif name == "test_connection":
             is_connected = await mikrotik_client.test_connection()
             if is_connected:
@@ -454,6 +602,12 @@ async def handle_list_prompts() -> List[types.Prompt]:
             name="system_health_check",
             title="System Health Check",
             description="Generate a comprehensive prompt for checking MikroTik system health and performance",
+            arguments=[]
+        ),
+        types.Prompt(
+            name="network_analysis",
+            title="Network Analysis",
+            description="Generate a comprehensive prompt for analyzing MikroTik network configuration and routing",
             arguments=[]
         ),
         types.Prompt(
@@ -533,6 +687,30 @@ Provide a detailed health assessment with recommendations for any issues found."
             ],
         )
     
+    elif name == "network_analysis":
+        prompt_text = """Please perform a comprehensive analysis of the MikroTik RouterOS network configuration.
+
+Analyze the IP addresses, routes, and network pools to understand the current network topology and configuration.
+
+Look for:
+- Network addressing scheme and subnet organization
+- Routing table structure and gateway configurations
+- IP address allocation and pool management
+- Potential network conflicts or misconfigurations
+- Security implications of the current setup
+
+Provide a detailed network analysis with recommendations for optimization and security improvements."""
+        
+        return types.GetPromptResult(
+            description="Network analysis",
+            messages=[
+                types.PromptMessage(
+                    role="user",
+                    content=types.TextContent(type="text", text=prompt_text),
+                ),
+            ],
+        )
+    
     elif name == "troubleshooting_guide":
         issue_description = arguments.get("issue_description", "")
         
@@ -577,7 +755,7 @@ async def run() -> None:
                 write_stream,
                 InitializationOptions(
                     server_name="mikrotik-routeros-server",
-                    server_version="0.1.0",
+                    server_version="0.2.0",
                     capabilities=server.get_capabilities(
                         notification_options=NotificationOptions(),
                         experimental_capabilities={
